@@ -1,4 +1,5 @@
 const fs = require('fs')
+const { get, isFunction } = require('./utils')
 
 // set flexsearch object as a global variable to make it available to language files
 global.FlexSearch = require('flexsearch')
@@ -61,10 +62,13 @@ exports.onPostBootstrap = function (_ref, options) {
 
       getNodes()
         .filter((node) => node.internal.type === type && nodeFilter(node))
-        .forEach((n, i) => {
+        .forEach((node, i) => {
           const id = i
           if (index_.indexed) {
-            const content = index_.resolver(n)
+            const { resolver } = index_
+            const content = isFunction(resolver)
+              ? resolver(node)
+              : get(node, resolver)
 
             if (Array.isArray(content)) {
               index.values.add(id, content.join(', '))
@@ -74,7 +78,9 @@ exports.onPostBootstrap = function (_ref, options) {
           }
           const nodeContent = {}
           fieldsToStore.forEach((field) => {
-            nodeContent[field.name] = field.resolver(n)
+            nodeContent[field.name] = isFunction(field.resolver)
+              ? field.resolver(node)
+              : get(node, field.resolver)
           })
           if (!nid.includes(id)) {
             store.push({ id, node: nodeContent })
