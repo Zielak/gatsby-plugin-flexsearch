@@ -3,7 +3,7 @@ const fs = require('fs')
 // set flexsearch object as a global variable to make it available to language files
 global.FlexSearch = require('flexsearch')
 
-exports.onPostBootstrap = function(_ref, options) {
+exports.onPostBootstrap = function (_ref, options) {
   const { getNodes } = _ref
 
   const { filter, type } = options
@@ -20,15 +20,15 @@ exports.onPostBootstrap = function(_ref, options) {
   const indexStore = []
   const fullIndex = {}
 
-  languages.forEach(lng => {
+  languages.forEach((lng) => {
     // collect fields to store
     const fieldsToStore = fields
-      .filter(field => (field.store ? field.resolver : null))
-      .map(field => ({ name: field.name, resolver: field.resolver }))
+      .filter((field) => (field.store ? field.resolver : null))
+      .map((field) => ({ name: field.name, resolver: field.resolver }))
     const nid = []
 
     // add each field to index
-    fields.forEach(index_ => {
+    fields.forEach((index_) => {
       const index = {}
       index.name = index_.name
 
@@ -45,7 +45,7 @@ exports.onPostBootstrap = function(_ref, options) {
             if (lng === 'en') {
               require('./lang/en')
             } else if (lng === 'de') {
-              require('./lang/en')
+              require('./lang/de')
             } else {
               console.error(
                 'Language not supported by pre-defined stemmer or filter'
@@ -60,15 +60,20 @@ exports.onPostBootstrap = function(_ref, options) {
       }
 
       getNodes()
-        .filter(node => node.internal.type === type && nodeFilter(node))
+        .filter((node) => node.internal.type === type && nodeFilter(node))
         .forEach((n, i) => {
           const id = i
           if (index_.indexed) {
             const content = index_.resolver(n)
-            index.values.add(id, content)
+
+            if (Array.isArray(content)) {
+              index.values.add(id, content.join(', '))
+            } else {
+              index.values.add(id, content)
+            }
           }
           const nodeContent = {}
-          fieldsToStore.forEach(field => {
+          fieldsToStore.forEach((field) => {
             nodeContent[field.name] = field.resolver(n)
           })
           if (!nid.includes(id)) {
